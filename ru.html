@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101713">
+  <title>NMC и LFP | Сравнение химических составов</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101713;
+      --panel: #18211c;
+      --panel-raised: #1d2922;
+      --line: #304038;
+      --text: #f0f4ec;
+      --muted: #a0afa4;
+      --lime: #c5f36b;
+      --teal: #63d6bd;
+      --orange: #ffb36b;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 12% 0%, #263a2a 0, transparent 34rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1120px, calc(100% - 36px)); margin: auto; padding: 42px 0 52px; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 30px; }
+    .brand { display: flex; align-items: center; gap: 10px; color: #cad5ca; font-size: 12px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+    .brand-mark { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #4d634f; border-radius: 9px; color: var(--lime); font-size: 16px; }
+    .topline-actions { display: flex; align-items: center; gap: 15px; }
+    .language-link { padding: 8px 10px; border: 1px solid #465746; border-radius: 9px; background: #18231b; color: #d8e3d7; font-size: 11px; text-decoration: none; }
+    .language-link:hover { border-color: #849b67; background: #243224; }
+    .live { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+    .live::before { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 10px #c5f36988; content: ""; }
+    .fullscreen-button { padding: 8px 10px; border: 1px solid #465746; border-radius: 9px; background: #18231b; color: #d8e3d7; font: inherit; font-size: 11px; cursor: pointer; }
+    .fullscreen-button:hover { border-color: #849b67; background: #243224; }
+    .fullscreen-button:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+    .fullscreen-status { margin: -21px 0 17px; color: #ffc18c; font-size: 11px; }
+    .fullscreen-status:empty { display: none; }
+    .hero { max-width: 740px; margin-bottom: 27px; }
+    .eyebrow { margin: 0 0 10px; color: var(--lime); font-size: 11px; font-weight: 750; letter-spacing: .19em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(34px, 6vw, 62px); line-height: .98; letter-spacing: -.055em; }
+    .intro { max-width: 650px; margin: 15px 0 0; color: var(--muted); font-size: 15px; line-height: 1.65; }
+    .chemistry { display: inline-flex; align-items: center; gap: 7px; margin-top: 19px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: #17221b; color: #d4dfd3; font-size: 11px; }
+    .chemistry b { color: var(--lime); }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, .82fr); gap: 16px; align-items: stretch; }
+    .card { border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, #1a241e, #151e19); box-shadow: 0 20px 55px #0002; }
+    .chart-card { min-height: 440px; padding: 22px 23px 18px; }
+    .chart-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .chart-heading h2, .calc-card h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .chart-heading p, .calc-card > p { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .chart-stamp { flex: none; padding: 6px 9px; border: 1px solid #3b4c40; border-radius: 7px; color: #b9c6ba; font-size: 10px; }
+    .metric-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin: 22px 0 16px; }
+    .metric-tab {
+      padding: 8px 10px; border: 1px solid #35473c; border-radius: 9px;
+      background: #17211b; color: #aebbb0; font: inherit; font-size: 11px; cursor: pointer;
+      transition: background .16s, border-color .16s, color .16s;
+    }
+    .metric-tab:hover { border-color: #647a65; color: var(--text); }
+    .metric-tab[aria-pressed="true"] { border-color: #8aab52; background: #293722; color: #e1f9b0; }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+    .plot { padding: 14px 0 5px; border-top: 1px solid #2a382f; border-bottom: 1px solid #2a382f; }
+    .axis { display: flex; justify-content: space-between; margin: 0 0 12px 99px; color: #829187; font-size: 10px; font-variant-numeric: tabular-nums; }
+    .row { display: grid; grid-template-columns: 85px minmax(0, 1fr) 82px; align-items: center; gap: 14px; min-height: 78px; }
+    .chem-label { display: grid; gap: 4px; }
+    .chem-label strong { font-size: 13px; }
+    .chem-label span { color: var(--muted); font-size: 10px; }
+    .track { position: relative; height: 19px; border: 1px solid #344139; border-radius: 5px; background: repeating-linear-gradient(90deg, #202c24 0, #202c24 calc(25% - 1px), #3a493e calc(25% - 1px), #3a493e 25%); }
+    .range { position: absolute; top: 2px; bottom: 2px; min-width: 5px; border-radius: 3px; }
+    .range.nmc { background: var(--teal); box-shadow: 0 0 14px #63d6bd33; }
+    .range.lfp { background: var(--orange); box-shadow: 0 0 14px #ffb36b33; }
+    .center-mark { position: absolute; top: -4px; bottom: -4px; width: 2px; border: 0; background: #f5f8ec; box-shadow: 0 0 5px #000; }
+    .value { text-align: right; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .value.nmc { color: var(--teal); }
+    .value.lfp { color: var(--orange); }
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 13px 0 0 99px; color: #a2b0a5; font-size: 10px; }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 9px; height: 9px; border-radius: 3px; background: var(--teal); }
+    .swatch.lfp { background: var(--orange); }
+    .marker { width: 2px; height: 12px; background: #f5f8ec; }
+    .chart-note { margin: 13px 0 0; color: #829187; font-size: 10px; line-height: 1.55; }
+    .side { display: grid; gap: 16px; }
+    .calc-card { padding: 21px; }
+    .calc-card h2 { font-size: 16px; }
+    .capacity-entry { display: flex; align-items: center; gap: 9px; margin-top: 17px; }
+    .capacity-entry label { color: #b7c3b8; font-size: 11px; }
+    .input-wrap { display: flex; align-items: center; gap: 7px; margin-left: auto; padding: 8px 10px; border: 1px solid #3b4b40; border-radius: 9px; background: #111a15; color: #95a398; font-size: 11px; }
+    input[type="number"] { width: 65px; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; }
+    input[type="number"]:focus-visible { outline: 0; }
+    .increment-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 11px; }
+    .increment-field { display: grid; gap: 6px; color: #aebbb0; font-size: 10px; }
+    .increment-field .input-wrap { width: 100%; margin-left: 0; padding: 6px 8px; }
+    .increment-field input { width: 100%; }
+    .increment-help { margin: 7px 0 0; color: #829187; font-size: 9px; line-height: 1.45; }
+    .energy-results { display: grid; gap: 8px; margin-top: 14px; }
+    .energy-result { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 12px; border: 1px solid #2e3c33; border-radius: 10px; background: #151f19; }
+    .energy-result span { color: #aebbb0; font-size: 11px; }
+    .energy-result strong { color: var(--teal); font-size: 14px; font-variant-numeric: tabular-nums; }
+    .energy-result.lfp strong { color: var(--orange); }
+    .chem-result { display: grid; gap: 9px; padding: 11px 12px; border: 1px solid #2e3c33; border-radius: 10px; background: #151f19; }
+    .chem-result.lfp { border-color: #483b2d; }
+    .chem-result-head, .chem-result-energy { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .chem-result-head span, .density-estimate { color: #aebbb0; font-size: 10px; }
+    .voltage-input { width: 55px !important; text-align: right; }
+    .chem-result-head .input-wrap { margin-left: auto; padding: 5px 7px; }
+    .chem-result-energy span { color: #aebbb0; font-size: 11px; }
+    .chem-result-energy strong { color: var(--teal); font-size: 14px; font-variant-numeric: tabular-nums; }
+    .chem-result.lfp .chem-result-energy strong { color: var(--orange); }
+    .density-estimate { padding-top: 8px; border-top: 1px solid #2a382f; line-height: 1.5; }
+    .formula { margin: 11px 0 0; color: #829187; font-size: 10px; line-height: 1.55; }
+    .module-card { grid-column: 1 / -1; padding: 23px; }
+    .module-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 19px; }
+    .module-header h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+    .module-header p { max-width: 610px; margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .module-fields { display: grid; grid-template-columns: repeat(4, minmax(125px, 1fr)); gap: 12px; }
+    .module-field { display: grid; gap: 7px; color: #b7c3b8; font-size: 11px; }
+    .module-field input, .module-field select, .module-field output { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid #3b4b40; border-radius: 9px; background: #111a15; color: var(--text); font: inherit; font-size: 13px; }
+    .module-field output { display: flex; align-items: center; color: var(--lime); font-variant-numeric: tabular-nums; }
+    .module-output { display: grid; grid-template-columns: repeat(5, minmax(110px, 1fr)); gap: 9px; margin-top: 16px; }
+    .module-stat { padding: 13px; border: 1px solid #2e3c33; border-radius: 10px; background: #151f19; }
+    .module-stat span { display: block; color: #aebbb0; font-size: 10px; }
+    .module-stat strong { display: block; margin-top: 6px; color: var(--lime); font-size: 17px; font-variant-numeric: tabular-nums; }
+    .module-note { margin: 13px 0 0; color: #829187; font-size: 10px; line-height: 1.55; }
+    .battery-card { grid-column: 1 / -1; padding: 23px; }
+    .battery-fields { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 12px; }
+    .battery-actions { display: flex; align-items: end; }
+    .fit-button { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid #627c45; border-radius: 9px; background: #293722; color: #e1f9b0; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .fit-button:hover { border-color: var(--lime); background: #35452a; }
+    .battery-output { display: grid; grid-template-columns: repeat(6, minmax(110px, 1fr)); gap: 9px; margin-top: 16px; }
+    .battery-stat { padding: 13px; border: 1px solid #2e3c33; border-radius: 10px; background: #151f19; }
+    .battery-stat span { display: block; color: #aebbb0; font-size: 10px; }
+    .battery-stat strong { display: block; margin-top: 6px; color: var(--lime); font-size: 16px; font-variant-numeric: tabular-nums; }
+    .battery-match { margin: 13px 0 0; padding: 12px; border: 1px solid #34473a; border-radius: 10px; background: #151f19; color: #b7c3b8; font-size: 10px; line-height: 1.6; font-variant-numeric: tabular-nums; }
+    .battery-note { margin: 10px 0 0; color: #829187; font-size: 10px; line-height: 1.55; }
+    .facts { padding: 19px 21px; }
+    .facts h2 { margin: 0 0 14px; font-size: 14px; }
+    .fact { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 10px 0; border-top: 1px solid #2a382f; }
+    .fact dt { color: #a9b6ab; font-size: 11px; }
+    .fact dd { margin: 0; color: var(--text); font-size: 11px; font-weight: 650; text-align: right; font-variant-numeric: tabular-nums; }
+    .fact dd span { display: block; margin-top: 3px; color: #849187; font-size: 9px; font-weight: 400; }
+    .takeaway { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .takeaway article { padding: 16px 17px; border: 1px solid var(--line); border-radius: 14px; background: #18211c; }
+    .takeaway h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 7px; font-size: 12px; }
+    .takeaway p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .dot { width: 8px; height: 8px; border-radius: 3px; background: var(--teal); }
+    .dot.lfp { background: var(--orange); }
+    footer { margin-top: 18px; color: #829187; font-size: 10px; line-height: 1.6; }
+    footer a { color: #c6d89d; text-underline-offset: 3px; }
+    @media (max-width: 820px) {
+      main { width: min(680px, calc(100% - 28px)); padding-top: 27px; }
+      .grid { grid-template-columns: 1fr; }
+      .chart-card { min-height: 410px; }
+      .side { grid-template-columns: 1fr 1fr; }
+      .module-output { grid-template-columns: repeat(3, minmax(110px, 1fr)); }
+      .battery-output { grid-template-columns: repeat(3, minmax(110px, 1fr)); }
+    }
+    @media (max-width: 540px) {
+      .topline { margin-bottom: 25px; }
+      .topline-actions { gap: 8px; }
+      .live { font-size: 0; }
+      .language-link { padding: 7px 8px; font-size: 10px; }
+      .fullscreen-button { padding: 7px 8px; font-size: 10px; }
+      .chart-card { padding: 18px 15px 16px; }
+      .chart-heading { display: block; }
+      .chart-stamp { display: inline-block; margin-top: 10px; }
+      .metric-tabs { gap: 6px; margin-top: 16px; }
+      .metric-tab { padding: 7px 8px; font-size: 10px; }
+      .axis { margin-left: 79px; }
+      .row { grid-template-columns: 68px minmax(0, 1fr) 67px; gap: 8px; min-height: 70px; }
+      .chem-label strong { font-size: 12px; }
+      .chem-label span { font-size: 9px; }
+      .value { font-size: 10px; }
+      .legend { padding-left: 76px; gap: 10px; font-size: 9px; }
+      .side { grid-template-columns: 1fr; }
+      .module-card { padding: 18px 15px; }
+      .module-fields { grid-template-columns: 1fr 1fr; }
+      .module-output { grid-template-columns: 1fr 1fr; }
+      .battery-card { padding: 18px 15px; }
+      .battery-fields { grid-template-columns: 1fr 1fr; }
+      .battery-output { grid-template-columns: 1fr 1fr; }
+      .takeaway { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topline">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">+</span> Обзор химии ячеек</div>
+      <div class="topline-actions">
+        <div class="live">Типичные диапазоны для ячеек</div>
+        <a class="language-link" href="index.html?lang=en" target="_top">English</a>
+        <button class="fullscreen-button" id="fullscreen-toggle" type="button" aria-pressed="false">На весь экран</button>
+      </div>
+    </div>
+    <p class="fullscreen-status" id="fullscreen-status" role="status" aria-live="polite"></p>
+
+    <header class="hero">
+      <p class="eyebrow">Литий-ионные аккумуляторы</p>
+      <h1>NMC vs LFP</h1>
+      <p class="intro">Два распространённых типа катодной химии для разных задач. Сравните удельную энергию ячеек, ёмкость катода, напряжение и срок службы, а затем соберите модуль из ячеек, соединённых последовательно и параллельно.</p>
+      <div class="chemistry"><b>NMC</b> Оксид никеля, марганца и кобальта <span aria-hidden="true">·</span> <b>LFP</b> Фосфат железа и лития</div>
+    </header>
+
+    <section class="grid" aria-label="Интерактивное сравнение химии аккумуляторов">
+      <section class="card chart-card" aria-labelledby="chart-title">
+        <div class="chart-heading">
+          <div>
+            <h2 id="chart-title">Сравнение показателей</h2>
+            <p id="chart-subtitle">Удельная энергия ячейки по массе</p>
+          </div>
+          <span class="chart-stamp">Типичные диапазоны</span>
+        </div>
+        <div class="metric-tabs" role="group" aria-label="Выберите сравниваемый показатель">
+          <button class="metric-tab" type="button" data-metric="gravimetric" aria-pressed="true">Энергия · Вт·ч/кг</button>
+          <button class="metric-tab" type="button" data-metric="volumetric" aria-pressed="false">Энергия · Вт·ч/л</button>
+          <button class="metric-tab" type="button" data-metric="capacity" aria-pressed="false">Ёмкость катода</button>
+          <button class="metric-tab" type="button" data-metric="cycles" aria-pressed="false">Ресурс циклов</button>
+        </div>
+        <div class="plot" role="img" aria-label="Диаграмма диапазонов значений">
+          <div class="axis" id="axis" aria-hidden="true"></div>
+          <div class="row">
+            <div class="chem-label"><strong>NMC</strong><span id="nmc-label">LiNiMnCoO₂</span></div>
+            <div class="track"><div class="range nmc" id="nmc-range"></div><div class="center-mark" id="nmc-mark"></div></div>
+            <div class="value nmc" id="nmc-value"></div>
+          </div>
+          <div class="row">
+            <div class="chem-label"><strong>LFP</strong><span id="lfp-label">LiFePO₄</span></div>
+            <div class="track"><div class="range lfp" id="lfp-range"></div><div class="center-mark" id="lfp-mark"></div></div>
+            <div class="value lfp" id="lfp-value"></div>
+          </div>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span><i class="swatch"></i> NMC</span>
+          <span><i class="swatch lfp"></i> LFP</span>
+          <span><i class="marker"></i> Середина диапазона</span>
+        </div>
+        <p class="chart-note" id="chart-note">Диапазоны отражают типичные характеристики серийных ячеек; фактические значения зависят от конструкции, формата, условий эксплуатации и метода измерения.</p>
+      </section>
+
+      <div class="side">
+        <section class="card calc-card" aria-labelledby="calc-title">
+          <h2 id="calc-title">Расчёт энергии ячейки</h2>
+          <p>Ёмкость показывает, сколько электрического заряда хранит ячейка. Введите её номинал, чтобы оценить энергию.</p>
+          <div class="capacity-entry">
+            <label for="capacity">Ёмкость ячейки</label>
+            <div class="input-wrap"><input id="capacity" type="number" min="1" max="1000" step="1" value="50" inputmode="decimal" aria-describedby="capacity-help increment-help"><span>А·ч</span></div>
+          </div>
+          <div class="increment-controls" aria-label="Шаг изменения значений">
+            <label class="increment-field" for="voltage-increment">Шаг напряжения
+              <span class="input-wrap"><input id="voltage-increment" type="number" min="0.01" max="1" step="0.01" value="0.01" inputmode="decimal" aria-describedby="increment-help"><span>V</span></span>
+            </label>
+            <label class="increment-field" for="capacity-increment">Шаг ёмкости
+              <span class="input-wrap"><input id="capacity-increment" type="number" min="0.1" max="100" step="0.1" value="1" inputmode="decimal" aria-describedby="increment-help"><span>А·ч</span></span>
+            </label>
+          </div>
+          <p class="increment-help" id="increment-help" role="status" aria-live="polite">Используйте стрелки в поле или клавиши ↑/↓, чтобы менять значения с заданным шагом.</p>
+          <div class="energy-results" aria-live="polite">
+            <div class="chem-result">
+              <div class="chem-result-head"><span>Номинальное напряжение NMC</span><label class="input-wrap"><input class="voltage-input" id="nmc-voltage" type="number" min="2" max="5" step="0.01" value="3.6" aria-label="Номинальное напряжение ячейки NMC"><span>В</span></label></div>
+              <div class="chem-result-energy"><span>Номинальная энергия ячейки</span><strong id="nmc-energy">180 Вт·ч</strong></div>
+              <div class="density-estimate" id="nmc-density">Оценка с пересчётом по напряжению: 180–250 Вт·ч/кг · 500–700 Вт·ч/л</div>
+            </div>
+            <div class="chem-result lfp">
+              <div class="chem-result-head"><span>Номинальное напряжение LFP</span><label class="input-wrap"><input class="voltage-input" id="lfp-voltage" type="number" min="2" max="5" step="0.01" value="3.2" aria-label="Номинальное напряжение ячейки LFP"><span>В</span></label></div>
+              <div class="chem-result-energy"><span>Номинальная энергия ячейки</span><strong id="lfp-energy">160 Вт·ч</strong></div>
+              <div class="density-estimate" id="lfp-density">Оценка с пересчётом по напряжению: 90–160 Вт·ч/кг · 220–350 Вт·ч/л</div>
+            </div>
+          </div>
+          <p class="formula" id="capacity-help">Номинальная энергия = А·ч × номинальное напряжение. При изменении напряжения пересчитывается энергия и ориентировочная удельная энергия, если ёмкость и масса/объём ячейки неизменны; ёмкость в А·ч не меняется. Реально доступная энергия зависит от порогового напряжения, температуры, тока разряда и системы управления.</p>
+        </section>
+
+        <section class="card facts" aria-labelledby="facts-title">
+          <h2 id="facts-title">Кратко о характеристиках</h2>
+          <dl>
+            <div class="fact"><dt>Номинальное напряжение ячейки</dt><dd>NMC 3,6–3,7 В<span>LFP 3,2–3,3 В</span></dd></div>
+            <div class="fact"><dt>Типичная ёмкость катода</dt><dd>NMC 160–210 мА·ч/г<span>LFP 150–165 мА·ч/г</span></dd></div>
+            <div class="fact"><dt>Типичный ресурс циклов¹</dt><dd>NMC 1 000–2 000<span>LFP 2 000–5 000 циклов</span></dd></div>
+            <div class="fact"><dt>Термическая стабильность</dt><dd>В целом ниже<span>LFP обычно стабильнее</span></dd></div>
+          </dl>
+        </section>
+      </div>
+    </section>
+
+    <section class="card module-card" aria-labelledby="module-title">
+      <div class="module-header">
+        <div>
+          <h2 id="module-title">Сборка аккумуляторного модуля</h2>
+          <p>Укажите общее количество ячеек, затем выберите число последовательно соединённых ячеек. Количество параллельных ветвей рассчитается автоматически, чтобы сохранить общее число ячеек. Ёмкость и напряжение ячейки задаются выше.</p>
+        </div>
+      </div>
+      <div class="module-fields">
+        <label class="module-field" for="module-chemistry">Химический состав
+          <select id="module-chemistry">
+            <option value="nmc">NMC</option>
+            <option value="lfp">LFP</option>
+          </select>
+        </label>
+        <label class="module-field" for="total-cells-input">Всего ячеек
+          <input id="total-cells-input" type="number" min="1" max="40000" step="1" value="64" inputmode="numeric">
+        </label>
+        <label class="module-field" for="series-count">Последовательно (S)
+          <input id="series-count" type="number" min="1" max="200" step="1" value="16" inputmode="numeric">
+        </label>
+        <label class="module-field" for="parallel-count">Параллельных ветвей (P) · авто
+          <output id="parallel-count" aria-live="polite">4</output>
+        </label>
+      </div>
+      <div class="module-output" aria-live="polite">
+        <div class="module-stat"><span>Всего ячеек</span><strong id="module-cells">64</strong></div>
+        <div class="module-stat"><span>Номинальное напряжение модуля</span><strong id="module-voltage">57,6 В</strong></div>
+        <div class="module-stat"><span>Ёмкость модуля</span><strong id="module-ah">200 А·ч</strong></div>
+        <div class="module-stat"><span>Номинальная энергия</span><strong id="module-energy">11,52 кВт·ч</strong></div>
+        <div class="module-stat"><span>Конфигурация</span><strong id="module-config">16S4P</strong></div>
+      </div>
+      <p class="module-note" id="module-note">Количество параллельных ветвей рассчитывается как общее число ячеек ÷ число ячеек в последовательной цепи. Для равномерной конфигурации общее число должно делиться на число последовательных ячеек без остатка. Последовательное соединение увеличивает напряжение, параллельное — ёмкость в А·ч.</p>
+    </section>
+
+    <section class="card battery-card" aria-labelledby="battery-title">
+      <div class="module-header">
+        <div>
+          <h2 id="battery-title">Сборка батареи из модулей</h2>
+          <p>Используйте одинаковые копии модуля выше как базовые элементы. Последовательное соединение модулей повышает напряжение, параллельное — ёмкость. Задайте целевые напряжение и номинальную энергию; автоматический подбор ищет целые количества модулей с наименьшим общим отклонением от обеих целей.</p>
+        </div>
+      </div>
+      <div class="battery-fields">
+        <label class="module-field" for="battery-series">Модулей последовательно
+          <input id="battery-series" type="number" min="1" max="200" step="1" value="4" inputmode="numeric">
+        </label>
+        <label class="module-field" for="battery-parallel">Параллельных ветвей модулей
+          <input id="battery-parallel" type="number" min="1" max="200" step="1" value="2" inputmode="numeric">
+        </label>
+        <label class="module-field" for="target-voltage">Целевое номинальное напряжение
+          <input id="target-voltage" type="number" min="1" max="1000000" step="1" value="400" inputmode="decimal">
+        </label>
+        <label class="module-field" for="target-energy">Целевая номинальная энергия
+          <span class="input-wrap"><input id="target-energy" type="number" min="0.001" max="1000000" step="0.1" value="90" inputmode="decimal"><span>кВт·ч</span></span>
+        </label>
+      </div>
+      <div class="battery-actions">
+        <button class="fit-button" id="battery-fit" type="button">Подобрать конфигурацию</button>
+      </div>
+      <div class="battery-output" aria-live="polite">
+        <div class="battery-stat"><span>Всего модулей</span><strong id="battery-modules">8</strong></div>
+        <div class="battery-stat"><span>Всего ячеек</span><strong id="battery-cells">512</strong></div>
+        <div class="battery-stat"><span>Номинальное напряжение батареи</span><strong id="battery-voltage">230,4 В</strong></div>
+        <div class="battery-stat"><span>Ёмкость батареи</span><strong id="battery-ah">400 А·ч</strong></div>
+        <div class="battery-stat"><span>Номинальная энергия батареи</span><strong id="battery-energy">92,16 кВт·ч</strong></div>
+        <div class="battery-stat"><span>Конфигурация ячеек</span><strong id="battery-config">64S8P</strong></div>
+      </div>
+      <p class="battery-match" id="battery-match" role="status" aria-live="polite">Отклонение от цели: +30,4 В · +2,16 кВт·ч</p>
+      <p class="battery-note" id="battery-note">Расчёт основан на одинаковых модулях и номинальных значениях. Фактическое напряжение меняется в процессе заряда и разряда. Инструмент не оценивает ток, нагрев, защиту, балансировку, механическую конструкцию или безопасность; проект должен быть проверен квалифицированными специалистами.</p>
+    </section>
+
+    <section class="takeaway" aria-label="Преимущества химических составов">
+      <article><h3><i class="dot"></i>Преимущества NMC</h3><p>Более высокая удельная энергия ячейки и компактные лёгкие конструкции — подходят, когда важны запас хода или экономия места.</p></article>
+      <article><h3><i class="dot lfp"></i>Преимущества LFP</h3><p>Более длительный срок службы, термическая стабильность и доступные материалы — часто выбираются для частых циклов и систем хранения энергии.</p></article>
+    </section>
+
+    <footer>
+      Приведены ориентировочные диапазоны, встречающиеся в характеристиках серийных ячеек и электродов; это не гарантированные спецификации. Ёмкость активного материала катода (мА·ч/г) не равна ёмкости всей ячейки (А·ч), и ни один из этих показателей отдельно не определяет параметры батарейного блока. ¹Ресурс циклов сильно зависит от глубины разряда, температуры, скорости заряда и критерия окончания срока службы.
+      <br><br>
+      Расчёты модуля идеализированы: они не задают безопасное рабочее напряжение и не заменяют подбор ячеек, систему управления батареей или инженерную проверку. Дополнительные материалы: <a href="https://www.nrel.gov/docs/fy21osti/77480.pdf" target="_blank" rel="noreferrer">Обзор характеристик и стоимости батарей NREL</a> · <a href="https://www.energy.gov/eere/vehicles/articles/fotw-1247-january-10-2022-2021-there-were-approximately-40-models-plug" target="_blank" rel="noreferrer">Обзор технологий батарей Министерства энергетики США</a>
+    </footer>
+  </main>
+  <script>
+    const metrics = {
+      gravimetric: {
+        subtitle: "Удельная энергия ячейки по массе",
+        unit: "Вт·ч/кг", max: 300, ticks: [0, 75, 150, 225, 300],
+        nmc: [180, 250], lfp: [90, 160], decimals: 0,
+        note: "Удельная энергия всей ячейки учитывает не только активный материал катода. На уровне батарейного блока показатель ниже из-за корпуса, охлаждения и системы управления."
+      },
+      volumetric: {
+        subtitle: "Удельная энергия ячейки по объёму",
+        unit: "Вт·ч/л", max: 800, ticks: [0, 200, 400, 600, 800],
+        nmc: [500, 700], lfp: [220, 350], decimals: 0,
+        note: "Объёмная удельная энергия учитывает компоненты ячейки, не участвующие в реакции. На уровне блока показатель ниже и зависит от конструкции модуля и системы."
+      },
+      capacity: {
+        subtitle: "Практическая удельная ёмкость активного материала катода",
+        unit: "мА·ч/г", max: 250, ticks: [0, 62.5, 125, 187.5, 250],
+        nmc: [160, 210], lfp: [150, 165], decimals: 0,
+        note: "Это заряд на грамм активного материала катода при типичных условиях, а не номинал ячейки в А·ч. Значения NMC существенно зависят от доли никеля и предельного напряжения."
+      },
+      cycles: {
+        subtitle: "Типичное число полных эквивалентных циклов до конца срока службы",
+        unit: "циклов", max: 6000, ticks: [0, 1500, 3000, 4500, 6000],
+        nmc: [1000, 2000], lfp: [2000, 5000], decimals: 0,
+        note: "Ресурс сильно зависит от методики испытаний. Глубина разряда, температура, скорость заряда и критерий конца срока службы могут существенно изменить результат."
+      }
+    };
+
+    const fmt = (number, decimals = 0) => new Intl.NumberFormat("ru-RU", {
+      maximumFractionDigits: decimals
+    }).format(number);
+
+    function renderMetric(key) {
+      const metric = metrics[key];
+      document.getElementById("chart-subtitle").textContent = metric.subtitle;
+      document.getElementById("chart-note").textContent = metric.note;
+      document.getElementById("axis").innerHTML = metric.ticks.map((tick) =>
+        `<span>${fmt(tick, tick % 1 ? 1 : 0)}</span>`
+      ).join("");
+      for (const chemistry of ["nmc", "lfp"]) {
+        const [low, high] = metric[chemistry];
+        const left = low / metric.max * 100;
+        const width = (high - low) / metric.max * 100;
+        const midpoint = (low + high) / 2 / metric.max * 100;
+        document.getElementById(`${chemistry}-range`).style.cssText = `left:${left}%;width:${width}%;`;
+        document.getElementById(`${chemistry}-mark`).style.left = `${midpoint}%`;
+        document.getElementById(`${chemistry}-value`).textContent =
+          `${fmt(low, metric.decimals)}–${fmt(high, metric.decimals)} ${metric.unit}`;
+      }
+    }
+
+    document.querySelectorAll(".metric-tab").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".metric-tab").forEach((tab) => tab.setAttribute("aria-pressed", "false"));
+        button.setAttribute("aria-pressed", "true");
+        renderMetric(button.dataset.metric);
+      });
+    });
+
+    const capacityInput = document.getElementById("capacity");
+    const voltageIncrementInput = document.getElementById("voltage-increment");
+    const capacityIncrementInput = document.getElementById("capacity-increment");
+    const voltageInputs = {
+      nmc: document.getElementById("nmc-voltage"),
+      lfp: document.getElementById("lfp-voltage")
+    };
+    const moduleChemistry = document.getElementById("module-chemistry");
+    const seriesInput = document.getElementById("series-count");
+    const totalCellsInput = document.getElementById("total-cells-input");
+    const parallelOutput = document.getElementById("parallel-count");
+    const batterySeriesInput = document.getElementById("battery-series");
+    const batteryParallelInput = document.getElementById("battery-parallel");
+    const targetVoltageInput = document.getElementById("target-voltage");
+    const targetEnergyInput = document.getElementById("target-energy");
+    const fullscreenButton = document.getElementById("fullscreen-toggle");
+    const fullscreenStatus = document.getElementById("fullscreen-status");
+
+    function updateFullscreenButton() {
+      const isFullscreen = document.fullscreenElement === document.documentElement;
+      fullscreenButton.textContent = isFullscreen ? "Выйти из полноэкранного режима" : "На весь экран";
+      fullscreenButton.setAttribute("aria-pressed", String(isFullscreen));
+    }
+
+    fullscreenButton.addEventListener("click", async () => {
+      fullscreenStatus.textContent = "";
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          fullscreenStatus.textContent = "Полноэкранный режим здесь недоступен. Используйте команду полноэкранного режима браузера.";
+        }
+      } catch (error) {
+        fullscreenStatus.textContent = "Не удалось включить полноэкранный режим. Попробуйте команду в меню браузера.";
+      }
+    });
+    document.addEventListener("fullscreenchange", updateFullscreenButton);
+
+    function readNumber(input, minimum, maximum, integer = false) {
+      const value = Number(input.value);
+      return Number.isFinite(value) && input.value.trim() !== "" &&
+        value >= minimum && value <= maximum && (!integer || Number.isInteger(value))
+        ? value
+        : null;
+    }
+
+    function updateEnergy() {
+      const capacity = Number(capacityInput.value);
+      if (!Number.isFinite(capacity) || capacity < 1 || capacity > 1000) {
+        capacityInput.setAttribute("aria-invalid", "true");
+      } else {
+        capacityInput.removeAttribute("aria-invalid");
+      }
+      for (const chemistry of ["nmc", "lfp"]) {
+        const voltage = readNumber(voltageInputs[chemistry], 2, 5);
+        const energy = document.getElementById(`${chemistry}-energy`);
+        const density = document.getElementById(`${chemistry}-density`);
+        if (voltage === null) {
+          voltageInputs[chemistry].setAttribute("aria-invalid", "true");
+          energy.textContent = "Проверьте напряжение";
+          density.textContent = "Укажите номинальное напряжение от 2 до 5 В.";
+          continue;
+        }
+        voltageInputs[chemistry].removeAttribute("aria-invalid");
+        if (!Number.isFinite(capacity) || capacity < 1 || capacity > 1000) {
+          energy.textContent = "Проверьте ёмкость";
+          density.textContent = "Укажите ёмкость ячейки от 1 до 1 000 А·ч.";
+          continue;
+        }
+        energy.textContent = `${fmt(capacity * voltage)} Вт·ч`;
+        const voltageScale = voltage / (chemistry === "nmc" ? 3.6 : 3.2);
+        const [kgLow, kgHigh] = metrics.gravimetric[chemistry].map((value) => value * voltageScale);
+        const [lLow, lHigh] = metrics.volumetric[chemistry].map((value) => value * voltageScale);
+        density.textContent =
+          `Оценка с пересчётом по напряжению: ${fmt(kgLow)}–${fmt(kgHigh)} Вт·ч/кг · ${fmt(lLow)}–${fmt(lHigh)} Вт·ч/л`;
+      }
+      updateModule();
+    }
+
+    function updateIncrements() {
+      const voltageIncrement = readNumber(voltageIncrementInput, 0.01, 1);
+      const capacityIncrement = readNumber(capacityIncrementInput, 0.1, 100);
+      const incrementHelp = document.getElementById("increment-help");
+      for (const [input, increment] of [
+        [voltageIncrementInput, voltageIncrement],
+        [capacityIncrementInput, capacityIncrement]
+      ]) {
+        if (increment === null) input.setAttribute("aria-invalid", "true");
+        else input.removeAttribute("aria-invalid");
+      }
+      if (voltageIncrement !== null) {
+        voltageInputs.nmc.step = String(voltageIncrement);
+        voltageInputs.lfp.step = String(voltageIncrement);
+      }
+      if (capacityIncrement !== null) capacityInput.step = String(capacityIncrement);
+      incrementHelp.textContent = voltageIncrement === null || capacityIncrement === null
+        ? "Укажите шаг напряжения от 0,01 до 1 В и шаг ёмкости от 0,1 до 100 А·ч."
+        : `Используйте стрелки или клавиши ↑/↓: шаг напряжения ${fmt(voltageIncrement, 2)} В, шаг ёмкости ${fmt(capacityIncrement, 2)} А·ч.`;
+      updateEnergy();
+    }
+
+    [voltageIncrementInput, capacityIncrementInput].forEach((input) =>
+      input.addEventListener("input", updateIncrements)
+    );
+    capacityInput.addEventListener("input", updateEnergy);
+    Object.values(voltageInputs).forEach((input) => input.addEventListener("input", updateEnergy));
+
+    function updateModule() {
+      const chemistry = moduleChemistry.value;
+      const totalCells = readNumber(totalCellsInput, 1, 40000, true);
+      const series = readNumber(seriesInput, 1, 200, true);
+      const capacity = readNumber(capacityInput, 1, 1000);
+      const voltage = readNumber(voltageInputs[chemistry], 2, 5);
+      const inputs = [
+        [totalCellsInput, totalCells], [seriesInput, series],
+        [capacityInput, capacity], [voltageInputs[chemistry], voltage]
+      ];
+      inputs.forEach(([input, value]) => {
+        if (value === null) input.setAttribute("aria-invalid", "true");
+        else input.removeAttribute("aria-invalid");
+      });
+      const values = ["module-cells", "module-voltage", "module-ah", "module-energy", "module-config"];
+      const evenlyDivisible = totalCells !== null && series !== null && totalCells % series === 0;
+      const parallel = evenlyDivisible ? totalCells / series : null;
+      parallelOutput.textContent = parallel !== null && parallel <= 200 ? fmt(parallel) : "—";
+      if (inputs.some(([, value]) => value === null) || !evenlyDivisible || parallel > 200) {
+        values.forEach((id) => { document.getElementById(id).textContent = "—"; });
+        document.getElementById("module-note").textContent = !evenlyDivisible && totalCells !== null && series !== null
+          ? "Для точного общего количества при равномерном последовательном и параллельном соединении число ячеек должно делиться на число последовательных ячеек без остатка. Выберите делитель общего количества."
+          : "Проверьте значения: всего ячеек — от 1 до 40 000, последовательно — от 1 до 200, ёмкость — от 1 до 1 000 А·ч, напряжение — от 2 до 5 В. Число параллельных ветвей не должно превышать 200.";
+        updateBattery();
+        return;
+      }
+      const cellCount = totalCells;
+      const moduleAh = parallel * capacity;
+      const moduleVoltage = series * voltage;
+      const energyWh = moduleAh * moduleVoltage;
+      document.getElementById("module-cells").textContent = fmt(cellCount);
+      document.getElementById("module-voltage").textContent = `${fmt(moduleVoltage, 2)} В`;
+      document.getElementById("module-ah").textContent = `${fmt(moduleAh, 2)} А·ч`;
+      document.getElementById("module-energy").textContent = `${fmt(energyWh / 1000, 2)} кВт·ч`;
+      document.getElementById("module-config").textContent = `${series}S${parallel}P`;
+      document.getElementById("module-note").textContent =
+        `Используется ${fmt(cellCount)} ячеек ${chemistry.toUpperCase()} в конфигурации ${series}S${parallel}P; напряжение ячейки — ${fmt(voltage, 2)} В, ёмкость — ${fmt(capacity, 2)} А·ч. При изменении числа последовательных ячеек число параллельных ветвей пересчитывается, общее количество остаётся фиксированным. Последовательное соединение повышает напряжение, параллельное — ёмкость. Оценка не учитывает BMS, температурные ограничения, балансировку и потери блока.`;
+      updateBattery();
+    }
+
+    function readModuleForBattery() {
+      const totalCells = readNumber(totalCellsInput, 1, 40000, true);
+      const cellSeries = readNumber(seriesInput, 1, 200, true);
+      const capacity = readNumber(capacityInput, 1, 1000);
+      const voltage = readNumber(voltageInputs[moduleChemistry.value], 2, 5);
+      if (totalCells === null || cellSeries === null || capacity === null || voltage === null ||
+          totalCells % cellSeries !== 0 || totalCells / cellSeries > 200) return null;
+      const cellParallel = totalCells / cellSeries;
+      const moduleVoltage = cellSeries * voltage;
+      const moduleCapacity = cellParallel * capacity;
+      return {
+        moduleVoltage,
+        moduleCapacity,
+        moduleEnergyWh: moduleVoltage * moduleCapacity,
+        moduleCells: totalCells,
+        cellSeries,
+        cellParallel
+      };
+    }
+
+    function updateBattery() {
+      const module = readModuleForBattery();
+      const seriesModules = readNumber(batterySeriesInput, 1, 200, true);
+      const parallelModules = readNumber(batteryParallelInput, 1, 200, true);
+      const targetVoltage = readNumber(targetVoltageInput, 1, 1000000);
+      const targetEnergy = readNumber(targetEnergyInput, 0.001, 1000000);
+      const valid = module !== null && seriesModules !== null && parallelModules !== null &&
+        targetVoltage !== null && targetEnergy !== null;
+      for (const [input, value] of [
+        [batterySeriesInput, seriesModules], [batteryParallelInput, parallelModules],
+        [targetVoltageInput, targetVoltage], [targetEnergyInput, targetEnergy]
+      ]) {
+        if (value === null) input.setAttribute("aria-invalid", "true");
+        else input.removeAttribute("aria-invalid");
+      }
+      const outputIds = ["battery-modules", "battery-cells", "battery-voltage", "battery-ah", "battery-energy", "battery-config"];
+      if (!valid) {
+        outputIds.forEach((id) => { document.getElementById(id).textContent = "—"; });
+        document.getElementById("battery-match").textContent = module === null
+          ? "Сначала задайте корректную конфигурацию модуля."
+          : "Проверьте количество модулей (1–200), целевое напряжение (1–1 000 000 В) и энергию (0,001–1 000 000 кВт·ч).";
+        return;
+      }
+      const modules = seriesModules * parallelModules;
+      const packVoltage = seriesModules * module.moduleVoltage;
+      const packCapacity = parallelModules * module.moduleCapacity;
+      const packEnergyKWh = packVoltage * packCapacity / 1000;
+      const layoutSeries = module.cellSeries * seriesModules;
+      const layoutParallel = module.cellParallel * parallelModules;
+      const voltageDifference = packVoltage - targetVoltage;
+      const energyDifference = packEnergyKWh - targetEnergy;
+      document.getElementById("battery-modules").textContent = fmt(modules);
+      document.getElementById("battery-cells").textContent = fmt(module.moduleCells * modules);
+      document.getElementById("battery-voltage").textContent = `${fmt(packVoltage, 2)} В`;
+      document.getElementById("battery-ah").textContent = `${fmt(packCapacity, 2)} А·ч`;
+      document.getElementById("battery-energy").textContent = `${fmt(packEnergyKWh, 2)} кВт·ч`;
+      document.getElementById("battery-config").textContent = `${layoutSeries}S${layoutParallel}P`;
+      document.getElementById("battery-match").textContent =
+        `Отклонение от цели — напряжение: ${voltageDifference >= 0 ? "+" : ""}${fmt(voltageDifference, 2)} В (${fmt(voltageDifference / targetVoltage * 100, 1)}%); энергия: ${energyDifference >= 0 ? "+" : ""}${fmt(energyDifference, 2)} кВт·ч (${fmt(energyDifference / targetEnergy * 100, 1)}%).`;
+    }
+
+    document.getElementById("battery-fit").addEventListener("click", () => {
+      const module = readModuleForBattery();
+      const targetVoltage = readNumber(targetVoltageInput, 1, 1000000);
+      const targetEnergy = readNumber(targetEnergyInput, 0.001, 1000000);
+      if (module === null || targetVoltage === null || targetEnergy === null) {
+        updateBattery();
+        return;
+      }
+      let bestSeries = 1;
+      let bestParallel = 1;
+      let bestError = Infinity;
+      for (let seriesModules = 1; seriesModules <= 200; seriesModules += 1) {
+        for (let parallelModules = 1; parallelModules <= 200; parallelModules += 1) {
+          const voltageError = (seriesModules * module.moduleVoltage - targetVoltage) / targetVoltage;
+          const energyError = (seriesModules * parallelModules * module.moduleEnergyWh / 1000 - targetEnergy) / targetEnergy;
+          const combinedError = voltageError ** 2 + energyError ** 2;
+          if (combinedError < bestError) {
+            bestError = combinedError;
+            bestSeries = seriesModules;
+            bestParallel = parallelModules;
+          }
+        }
+      }
+      batterySeriesInput.value = String(bestSeries);
+      batteryParallelInput.value = String(bestParallel);
+      updateBattery();
+    });
+    [batterySeriesInput, batteryParallelInput, targetVoltageInput, targetEnergyInput].forEach((input) =>
+      input.addEventListener("input", updateBattery)
+    );
+    window.addEventListener("message", (event) => {
+      if (event.source !== parent || !event.data) return;
+      if (event.data.type === "battery:get-state") {
+        const ids = [
+          "capacity", "voltage-increment", "capacity-increment", "nmc-voltage", "lfp-voltage",
+          "module-chemistry", "total-cells-input", "series-count", "battery-series",
+          "battery-parallel", "target-voltage", "target-energy"
+        ];
+        const values = Object.fromEntries(ids.map((id) => [id, document.getElementById(id).value]));
+        const metric = document.querySelector(".metric-tab[aria-pressed='true']")?.dataset.metric ?? "gravimetric";
+        parent.postMessage({ type: "battery:state", values, metric }, "*");
+      }
+      if (event.data.type === "battery:restore-state") {
+        for (const [id, value] of Object.entries(event.data.state?.values ?? {})) {
+          const input = document.getElementById(id);
+          if (!input || typeof value !== "string") continue;
+          input.value = value;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        const metric = document.querySelector(`.metric-tab[data-metric="${event.data.state?.metric}"]`);
+        if (metric) metric.click();
+      }
+    });
+    [moduleChemistry, totalCellsInput, seriesInput].forEach((input) =>
+      input.addEventListener("input", updateModule)
+    );
+    renderMetric("gravimetric");
+    updateIncrements();
+    updateEnergy();
+  </script>
+</body>
+</html>
